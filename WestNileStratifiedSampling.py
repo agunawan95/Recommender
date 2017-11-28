@@ -1,5 +1,7 @@
 import pandas as pd
 import ClassifierRecommender as cr
+from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedShuffleSplit
 import csv
 import numpy as np
 import os
@@ -7,29 +9,28 @@ import time
 
 rec = cr.ClassifierRecommender()
 
-df = pd.read_csv("hr.csv")
-df.drop(['sales', 'salary'], inplace=True, axis=1)
+df = pd.read_csv("west_nile_clean.csv")
 
 rec.set_data(df.copy())
-rec.define_target('left')
+rec.define_target('WnvPresent')
 rec.run()
 
-fn = 'result/hr_random_result.csv'
+fn = 'result/wn_stratified_result.csv'
 os.remove(fn) if os.path.exists(fn) else None
 
-with open('result/hr_random_result.csv', 'wb') as csvfile:
+with open(fn, 'wb') as csvfile:
     logwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    logwriter.writerow(['Data: HR'])
+    logwriter.writerow(['Data: West Nile'])
     logwriter.writerow(['Type: Classification'])
     logwriter.writerow(['Data Count: ' + str(df.shape[0])])
-    logwriter.writerow(['Sampling Type: Random'])
+    logwriter.writerow(['Sampling Type: Stratified'])
     logwriter.writerow(['---'])
     logwriter.writerow(['All Data Result (Acc): '])
 print "All Data Result: "
 res_acc = rec.sort('accuracy')
 co = 1
 for value in res_acc:
-    with open('result/hr_random_result.csv', 'ab') as csvfile:
+    with open(fn, 'ab') as csvfile:
         logwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         logwriter.writerow([str(co), value['name']])
         co += 1
@@ -37,12 +38,12 @@ for value in res_acc:
 
 res_time = rec.sort('time')
 co = 1
-with open('result/hr_random_result.csv', 'ab') as csvfile:
+with open(fn, 'ab') as csvfile:
     logwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     logwriter.writerow(['All Data Result (Time): '])
 
 for value in res_time:
-    with open('result/hr_random_result.csv', 'ab') as csvfile:
+    with open(fn, 'ab') as csvfile:
         logwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         logwriter.writerow([str(co), value['name']])
         co += 1
@@ -56,33 +57,33 @@ def frange(x, y, jump):
         x += jump
 
 
-with open('result/hr_random_result.csv', 'ab') as csvfile:
+with open(fn, 'ab') as csvfile:
     logwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     logwriter.writerow(['---'])
     logwriter.writerow(['Percentage Sampling', 'Acc. Decision Tree', 'Acc. Naive Bayes', 'Acc. Logistic Regression', 'Time. Decision Tree', 'Time. Naive Bayes', 'Time. Logistic Regression', 'Acc. Recommender', 'Acc. Runtime Recommender', 'Total Time'])
-sample_df = df.copy()
+x = df.copy()
+y = df['WnvPresent']
 for case in range(1, 6):
-    with open('result/hr_random_result.csv', 'ab') as csvfile:
+    with open(fn, 'ab') as csvfile:
         logwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         logwriter.writerow(['Iteration-' + str(case)])
     for p in frange(0.1, 0.6, 0.1):
-        row = sample_df.shape[0]
-
-        percent = p
-
-        sdf = sample_df.sample(int(row * percent))
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=p, random_state=0)
+        for train_index, test_index in sss.split(x, y):
+            x_train, x_test = x.iloc[train_index], x.iloc[test_index]
+            y_train, y_test = y[train_index], y[test_index]
 
         rec.reset()
-        rec.set_data(sdf.copy())
-        rec.define_target('left')
+        rec.set_data(x_test.copy())
+        rec.define_target('WnvPresent')
         start = time.clock()
         rec.run()
         end = time.clock()
         total_time = end - start
         result = rec.sort('accuracy')
-        with open('result/hr_random_result.csv', 'ab') as csvfile:
+        with open(fn, 'ab') as csvfile:
             c = {}
-            print "Percent: " + str(p) + ", Rows: " + str(sdf.shape[0])
+            print "Percent: " + str(p) + ", Rows: " + str(x_test.shape[0])
             for value in result:
                 print "Name: " + str(value['name'])
                 print "Accuracy: " + str(value['accuracy'])
