@@ -37,6 +37,7 @@ for value in res_acc:
 
 res_time = rec.sort('time')
 co = 1
+
 with open('result/hr_random_result.csv', 'ab') as csvfile:
     logwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     logwriter.writerow(['All Data Result (Time): '])

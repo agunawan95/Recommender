@@ -5,6 +5,7 @@ import numpy as np
 import os
 import time
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import train_test_split
 
 rec = cr.ClassifierRecommender()
 
@@ -68,10 +69,7 @@ for case in range(1, 6):
         logwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         logwriter.writerow(['Iteration-' + str(case)])
     for p in frange(0.1, 0.6, 0.1):
-        sss = StratifiedShuffleSplit(n_splits=1, test_size=p, random_state=0)
-        for train_index, test_index in sss.split(x, y):
-            x_train, x_test = x.iloc[train_index], x.iloc[test_index]
-            y_train, y_test = y[train_index], y[test_index]
+        x_train, x_test, y_train, y_test = train_test_split(df, y, test_size=0.3)
 
         rec.reset()
         rec.set_data(x_test.copy())

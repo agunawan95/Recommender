@@ -41,10 +41,18 @@ class Recommender:
         self.y = None
         self.result = []
 
+    def get_cross_validation_split(self):
+        if self.df.shape[0] <= 999:
+            return 2
+        else:
+            return 10
+
     def sort(self, based):
         res = []
         if based == 'accuracy':
             res = multikeysort(self.result, ['accuracy', 'error'], True)
+        elif based == 'rmse':
+            res = multikeysort(self.result, ['accuracy', 'error'], False)
         elif based == 'time':
             res = multikeysort(self.result, ['time', 'accuracy'], False)
         return res
